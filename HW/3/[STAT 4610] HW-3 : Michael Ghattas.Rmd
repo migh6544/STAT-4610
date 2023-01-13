@@ -1,0 +1,85 @@
+---
+title: '[STAT 4610] HW-3 / Michael Ghattas'
+author: "Michael Ghattas"
+date: "9/18/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Chapter - 4
+
+
+## Problem - 13
+
+```{r}
+library(ISLR)
+library(corrplot)
+```
+
+### Part - (a)
+
+```{r}
+summary(Weekly)
+corrplot(cor(Weekly[,-9]), method="square")
+```
+-> Year and Volume are the variables that seem to have a significant linear relation. \
+
+
+### Part - (b)
+
+```{r}
+Weekly.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly, family = binomial)
+summary(Weekly.fit)
+```
+-> Lag2 seems to be the only variable that has statistical significant at the level of significance. \
+
+
+### Part - (c)
+
+```{r}
+logWeekly.prob = predict(Weekly.fit, type = 'response')
+logWeekly.pred = rep("Down", length(logWeekly.prob))
+logWeekly.pred[logWeekly.prob > 0.5] = "Up"
+
+table(logWeekly.pred, Weekly$Direction)
+```
+
+-> The model predicted the weekly market trend correctly 56.11% of the time. \
+-> $\frac{54 + 557}{54 + 48 + 430 + 557}$ = 0.5611 \
+-> The model correctly predicted the Upward weekly trends 92.07% of the time. \
+-> $\frac{557}{48 + 557}$ = 0.9207 \
+-> The model correctly predicted the Downward weekly trends 11.15% of the time. \
+-> $\frac{54}{54 + 430}$ = 0.1115 \
+
+
+### part - (d)
+
+```{r}
+Direction = Weekly$Direction
+
+train = (Weekly$Year < 2009)
+test <- Weekly[!train, ]
+
+Weekly.fit <- glm(Direction ~ Lag2, data = Weekly, family = binomial, subset = train)
+
+logWeekly.prob = predict(Weekly.fit, test, type = "response")
+logWeekly.pred = rep("Down", length(logWeekly.prob))
+logWeekly.pred[logWeekly.prob > 0.5] = "Up"
+Direction.test = Direction[!train]
+
+table(logWeekly.pred, Direction.test)
+
+mean(logWeekly.pred == Direction.test)
+```
+
+-> The model correctly predicted weekly trends at rate of 62.5% of the time. \
+-> The model predicted upward trends 91.80% of the time. \
+-> The model predicted downward trends 20.93%of the time. \
+
+
+# End.

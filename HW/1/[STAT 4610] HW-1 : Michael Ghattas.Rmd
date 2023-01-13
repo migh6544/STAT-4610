@@ -1,0 +1,80 @@
+---
+title: '[STAT 4610] HW-1 / Michael Ghattas'
+author: "Michael Ghattas"
+date: "9/6/2022"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Problem 10
+
+
+## Start:
+
+```{r}
+library("ISLR")
+head(Carseats)
+```
+
+
+### Part (a)
+
+```{r}
+lm.fit = lm(Sales ~ Price + Urban + US, data = Carseats)
+summary(lm.fit)
+```
+
+
+### Part (b)
+
+* If the price increases by USD 1000 while other predictors held constant, sales would decrease by ~54.46 units.
+* A store location in relation to Urban areas has no affect on sales.
+* US based stores will on average sell 1200 more carseats than international stores.
+
+
+### Part (c)
+
+* $Sales = \beta_{0} + \beta_{1} \cdot Price  + \beta_{2} \cdot UrbanYes + \beta_{3} \cdot USYes$
+
+
+### Part (d)
+
+* Urban: Its p-value is not statistically significant (p-value = 0.936).
+
+
+### Part (e)
+
+```{r}
+lm.fit2 = lm(Sales ~ Price + US, data = Carseats)
+summary(lm.fit2)
+```
+
+
+### Part (f)
+
+* Given the R^2 values we can note that the two models are weak, with only ~23.5% of the data explained.
+
+### Part (g)
+
+```{r}
+confint(lm.fit2)
+```
+
+
+### Part (h)
+
+```{r}
+par(mfrow = c(2, 2))
+plot(lm.fit2)
+```
+
+
+* No treatment is needed, given the Normal Q-Q plot and the Residuals vs Leverage plot, we can note that outliers/high-leverage points are not significantly visible.
+
+
+## End.

@@ -1,0 +1,224 @@
+---
+title: '[''STAT 4610] HW-4'
+author: "Michael Ghattas"
+date: "9/24/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Chapter - 4
+
+
+## Problem - 13
+
+```{r}
+library(ISLR)
+library(corrplot)
+library(MASS)
+library(class)
+library(e1071)
+```
+
+
+### Part - (a)
+
+```{r}
+summary(Weekly)
+corrplot(cor(Weekly[, -9]), method = "square")
+```
+
+-> Year and Volume are the variables that seem to have a significant linear relation. \
+
+
+### Part - (b)
+
+```{r}
+Weekly.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly, family = binomial)
+summary(Weekly.fit)
+```
+
+-> Lag2 seems to be the only variable that has statistical significant at the level of significance. \
+
+
+### Part - (c)
+
+```{r}
+logWeekly.prob = predict(Weekly.fit, type = 'response')
+logWeekly.pred = rep("Down", length(logWeekly.prob))
+logWeekly.pred[logWeekly.prob > 0.5] = "Up"
+
+table(logWeekly.pred, Weekly$Direction)
+```
+
+-> The model predicted the weekly market trend correctly 56.11% of the time. \
+
+-> $\frac{54 + 557}{54 + 48 + 430 + 557}$ = 0.5611 \
+
+-> The model correctly predicted the Upward weekly trends 92.07% of the time. \
+
+-> $\frac{557}{48 + 557}$ = 0.9207 \
+
+-> The model correctly predicted the Downward weekly trends 11.15% of the time. \
+
+-> $\frac{54}{54 + 430}$ = 0.1115 \
+
+
+### part - (d)
+
+```{r}
+Direction = Weekly$Direction
+train = (Weekly$Year < 2009)
+test <- Weekly[!train, ]
+
+Weekly.fit <- glm(Direction ~ Lag2, data = Weekly, family = binomial, subset = train)
+
+logWeekly.prob = predict(Weekly.fit, test, type = "response")
+logWeekly.pred = rep("Down", length(logWeekly.prob))
+logWeekly.pred[logWeekly.prob > 0.5] = "Up"
+Direction.test = Direction[!train]
+
+table(logWeekly.pred, Direction.test)
+mean(logWeekly.pred == Direction.test)
+```
+
+-> The model correctly predicted weekly trends at rate of 62.5% of the time. \
+
+-> The model predicted upward trends 91.80% of the time. \
+
+-> The model predicted downward trends 20.93%of the time. \
+
+
+### part - (e)
+
+```{r}
+WeeklyLDA.fit <- lda(Direction ~ Lag2, data = Weekly, family = binomial, subset = train)
+WeeklyLDA.pred <- predict(WeeklyLDA.fit, test)
+
+table(WeeklyLDA.pred$class, Direction.test)
+mean(WeeklyLDA.pred$class == Direction.test)
+```
+
+-> The Linear Discriminant Analysis (LDA) classifying model results are identical to the logistic regression model from part (e). \
+
+
+### part - (f)
+
+```{r}
+WeeklyQDA.fit <- qda(Direction ~ Lag2, data = Weekly, subset = train)
+WeeklyQDA.pred <- predict(WeeklyQDA.fit, test)
+
+table(WeeklyQDA.pred$class, Direction.test)
+mean(WeeklyQDA.pred$class == Direction.test)
+```
+
+-> The Quadratic Linear Analysis (QDA) model has 58.65% accuracy, which is lower than LDA, which has an accuracy of 62.5%. \
+
+-> The QDA model only predicting the correctness of weekly upward trends while missing the downward weekly trends. \
+
+
+### part - (g)
+
+```{r}
+Week.train = as.matrix(Weekly$Lag2[train])
+Week.test = as.matrix(Weekly$Lag2[!train])
+Direction.train = Direction[train]
+
+set.seed(111)
+WeekKNN.pred = knn(Week.train, Week.test, Direction.train, k = 1)
+
+table(WeekKNN.pred, Direction.test)
+mean(WeekKNN.pred == Direction.test)
+```
+
+-> The K-Nearest Neighbors (KNN) model resulted in a classifying model has ~51% accuracy. \
+
+-> The KNN model has the lowest accuracy. \
+
+
+### part - (h)
+
+```{r}
+WeeklyNB.fit <- naiveBayes(Direction ~ Lag2, data = Weekly, subset = train)
+WeeklyNB.pred <- predict(WeeklyNB.fit, test)
+
+table(WeeklyNB.pred, Direction.test)
+mean(WeeklyNB.pred == Direction.test)
+```
+
+-> The Naive Bayes (NB) model has 58.65% accuracy, which is identical to the QDA model from part (f). \
+
+-> Like the QDA model, the NB model also only predicting the correctness of weekly upward trends while missing the downward weekly trends. \
+
+
+### part - (i)
+
+-> Both the Logistic Regression model and LDA model have the best accuracy rate of 62.5%. \
+
+
+### part - (j)
+
+```{r}
+#Logistic Regression with Lag2
+Weekly.fit <- glm(Direction ~ Lag2, data = Weekly, family = binomial, subset = train)
+
+logWeekly.prob = predict(Weekly.fit, test, type = "response")
+logWeekly.pred = rep("Down", length(logWeekly.prob))
+logWeekly.pred[logWeekly.prob > 0.5] = "Up"
+Direction.test = Direction[!train]
+
+table(logWeekly.pred, Direction.test)
+mean(logWeekly.pred == Direction.test)
+
+
+#LDA with Lag2
+WeeklyLDA.fit <- lda(Direction ~ Lag2, data = Weekly,family = binomial, subset = train)
+WeeklyLDA.pred <- predict(WeeklyLDA.fit, test)
+
+table(WeeklyLDA.pred$class, Direction.test)
+mean(WeeklyLDA.pred$class == Direction.test)
+
+
+#QDA with with the 2nd power polynomial of Lag2
+WeeklyQDA.fit = qda(Direction ~ poly(Lag2, 2), data = Weekly, subset = train)
+WeeklyQDA.pred = predict(WeeklyQDA.fit, test)
+
+table(WeeklyQDA.pred$class, Direction.test)
+mean(WeeklyQDA.pred$class == Direction.test)
+
+
+#KNN with Lag2 & K = 10
+Week.train = as.matrix(Weekly$Lag2[train])
+Week.test = as.matrix(Weekly$Lag2[!train])
+Direction.train = Direction[train]
+
+set.seed(222)
+WeekKNN.pred = knn(Week.train, Week.test, Direction.train, k = 10)
+
+table(WeekKNN.pred, Direction.test)
+mean(WeekKNN.pred == Direction.test)
+
+
+#KNN with Lag2 & K = 100
+Week.train = as.matrix(Weekly$Lag2[train])
+Week.test = as.matrix(Weekly$Lag2[!train])
+Direction.train = Direction[train]
+
+set.seed(222)
+WeekKNN.pred = knn(Week.train, Week.test, Direction.train, k = 100)
+
+table(WeekKNN.pred, Direction.test)
+mean(WeekKNN.pred == Direction.test)
+```
+
+-> The Logistic Regression, LDA, and QDA(lag2^2) models have the best accuracy rate of 62.5%. \
+
+-> While there where some improvement in accuracy with the KNN (k= 10, k = 100) models, their accuracy remains lower. \
+
+
+# End.

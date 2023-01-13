@@ -1,0 +1,94 @@
+---
+title: "STAT4610 - HW5"
+author: "Michael Ghattas"
+date: "10/2/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Question 7
+
+
+```{r}
+library(ISLR2)
+library(boot)
+
+summary(Weekly)
+```
+
+
+
+### part-(a)
+
+
+```{r}
+logReg1 = glm(Direction ~ Lag1 + Lag2, data = Weekly, family = binomial)
+summary(logReg1)
+```
+
+
+
+### part-(b)
+
+
+```{r}
+set.seed(123)
+
+logReg2 = glm(Direction ~ Lag1 + Lag2, data = Weekly[-1, ], family = binomial)
+summary(logReg2)
+```
+
+
+
+### part-(c)
+
+
+```{r}
+predict.glm(logReg2, Weekly[1, ], type = "response")
+predict.glm(logReg2, Weekly[1, ], type = "response") > 0.5
+
+Weekly$Direction[1]
+```
+
+-> The prediction was ~0.57, which is greater than 0.5, meaning the predicted direction is UP. \
+
+-> The actual direction was DOWN. \
+
+-> The prediction was inaccurate. \
+
+
+### part-(d)
+
+
+```{r}
+errorCount = rep(0, dim(Weekly)[1])
+for (i in 1:(dim(Weekly)[1])) {
+    logReg3 = glm(Direction ~ Lag1 + Lag2, data = Weekly[-i, ], family = binomial)
+    predUp = predict.glm(logReg3, Weekly[i, ], type = "response") > 0.5
+    isUp = Weekly[i, ]$Direction == "Up"
+    if (predUp != isUp) 
+        errorCount[i] = 1
+}
+sum(errorCount)
+```
+
+-> The algorithm computed a sum of 490 errors. \
+
+
+### part-(e)
+
+
+```{r}
+mean(errorCount)
+```
+
+-> The Leave-One-Out Cross-Validation (LOOCV) estimate for the test error is 45%. \
+
+
+# End.

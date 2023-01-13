@@ -1,0 +1,179 @@
+---
+title: '[STAT 4610] HW-2 / Michael Ghattas'
+author: "Michael Ghattas"
+date: "9/12/2022"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Start:
+
+```{r}
+library("ISLR")
+head(Carseats)
+```
+
+
+### Part (1)
+
+```{r}
+lm.fit = lm(Sales ~ Price + Urban + US, data = Carseats)
+summary(lm.fit)
+
+lm.fit2 = lm(Sales ~ Price + US, data = Carseats)
+summary(lm.fit2)
+```
+lm.fit:
+
+*   If the price increases by USD 1000 while other predictors held constant, sales would decrease by ~54.46 units, sales from individuals observed living in Urban areas would decrease by ~21.91 units, and sales from individuals observed living in the US would increase by ~1200.57 units
+*   A store location in relation to Urban areas has no affect on sales.
+*   US based stores will on average sell ~1200 more carseats than international stores.
+
+lm.fit2:
+
+*   If the price increases by USD 1000 while other predictors held constant, sales would decrease by ~54.48 units, and sales from individuals observed living in the US would increase by ~1199.64 units
+*   US based stores will on average sell ~1200 more carseats than international stores.
+
+
+### Part (2)
+
+```{r}
+lm.fit3 = lm(Sales ~ ., data = Carseats)
+summary(lm.fit3)
+```
+
+R^2:
+
+*   We mote that the adj.R^2 value for lm.fit3 is 0.8698, indicating that ~86.98 of the data can be explained by the model.
+*   In contrast, we see that the adj.R^2 value for lm.fit2 is 0.2354, indicating that ~23.54% of the data can be explained by the model.
+*   Furthermore, we see that the adj.R^2 value for lm.fit is 0.2335, indicating that ~23.35% of the data can be explained by the model.
+
+We can see that lm.fit3 is the better fitting model, given the adj. R^2 value, which indicates that the model explains ~63.44% more of the data than lm.fit and ~63.63% more of the data than lm.fit2.
+
+
+### Part (3)
+
+```{r}
+lm.fit4 = lm(Sales ~ . - (Population + Education + Urban + US), data = Carseats)
+summary(lm.fit4)
+```
+
+
+### Part (4)
+
+```{r}
+f.test = var.test(lm.fit4, lm.fit3)
+f.test
+```
+
+The f.test = 0.99902, while the p-value for the test is 0.9924. We can clearly see that p-value > significance level (0.05) and conclude that there is no significant difference between the two variances.
+
+F-Statistic: The F-test statistic or F-ratio is simply a scaled version of ∆SSE: {([SSE(R) − SSE(F)]/∆p) / σˆF2} = [(∆SSE/∆p) / MSEF], where:
+
+  1.    SSE(R) is the reduced model SSE
+  2.    SSE(F) is the full model SSE
+  3.    ∆p is the number of coefficients being tested
+  4.    σˆF2 = MSEF is the full-model estimate of the random error variance σ2.
+
+Note that the numerator of F is essentially the average reduction in SSE per predictor eliminated from the full model.
+Since the numerator is in units of Y squared and the denominator σˆF2 is also in units of Y squared, F is dimensionless and hence invariant to changes in units.
+
+Hypotheses: The F-test hypotheses are;
+  Ho:   All coefficients under consideration are zero.
+  Ha:   At least one of the coefficients in nonzero.
+  
+```{r}
+f.test2 = var.test(lm.fit2, lm.fit3)
+f.test2
+```
+
+The f.test2 = 5.873377, while the p-value for the test is ~0. Since we can clearly see that p-value < significance level, we can conclude that there is significant difference between the two variances.
+
+Conclusion:
+
+*   Based on the the R^2 of lim.fit3, lm.fit3, and lm.fit4, and combined with the output of f.test and f.test2, we can conclude that the reduced model (lm.fit4) has the best fit, though not much better than the full model (lm.fit3), and performs much better than lm.fit2. 
+
+
+### Part (5)
+
+```{r}
+aic1 = AIC(lm.fit4, lm.fit3)
+aic1
+
+aic2 = AIC(lm.fit2, lm.fit3)
+aic2
+
+bic1 = BIC(lm.fit4, lm.fit3)
+bic1
+
+bic2 = BIC(lm.fit2, lm.fit3)
+bic2
+```
+
+Yes:
+
+*   aic1: Given the output we can clearly see that aic1 indicates that the AIC score for lm.fit4 < lm.fit3, indicating that lm.fit4 is a better fit, though not by much.
+*   aic2: Given the output we can clearly see that aic2 indicates that the AIC score for lm.fit3 < lm.fit2, indicating that lm.fit3 is a much better fit.
+
+*   bic1: Given the output we can clearly see that aic1 indicates that the BIC score for lm.fit4 < lm.fit3, indicating that lm.fit4 is a better fit, though not by much.
+*   bic2: Given the output we can clearly see that aic2 indicates that the BIC score for lm.fit3 < lm.fit2, indicating that lm.fit3 is a much better fit.
+
+
+### Part (6)
+
+```{r}
+aic3 = AIC(lm.fit, lm.fit2)
+aic3
+
+aic4 = AIC(lm.fit, lm.fit3)
+aic4
+
+aic5 = AIC(lm.fit, lm.fit4)
+aic5
+
+aic6 = AIC(lm.fit2, lm.fit3)
+aic6
+
+aic7 = AIC(lm.fit2, lm.fit4)
+aic7
+
+aic8 = AIC(lm.fit3, lm.fit4)
+aic8
+```
+```{r}
+bic3 = AIC(lm.fit, lm.fit2)
+bic3
+
+bic4 = BIC(lm.fit, lm.fit3)
+bic4
+
+bic5 = BIC(lm.fit, lm.fit4)
+bic5
+
+bic6 = BIC(lm.fit2, lm.fit3)
+bic6
+
+bic7 = BIC(lm.fit2, lm.fit4)
+bic7
+
+bic8 = BIC(lm.fit3, lm.fit4)
+bic8
+```
+
+
+Each model needs thorough examination and analysis, and based on its characteristics, one would need to use the right tools. However, AIC, BIC , or Stepwise regression techniques can help identify the right steps that need to be taken in eliminating or accepting the models to work with an choose from. My recommendation is to use both AIC and BIC. Most of the times they will agree on the preferred model, when they don't, just report it. There is no one type approach to finding the right model using only AIC, BIC, or Stepwise regression. 
+
+
+### Part (7)
+
+The AIC tries to select the model that most adequately describes an unknown, high dimensional reality. This means that reality is never in the set of candidate models that are being considered. On the contrary, BIC tries to find the TRUE model among the set of candidates. I find it quite odd the assumption that reality is instantiated in one of the models that the researchers built along the way. This is a real issue for BIC.
+
+Nevertheless, there are a lot of researchers who say BIC is better than AIC, using model recovery simulations as an argument. These simulations consist of generating data from models A and B, and then fitting both datasets with the two models. Overfitting occurs when the wrong model fits the data better than the generating. The point of these simulations is to see how well AIC and BIC correct these overfits. Usually, the results point to the fact that AIC is too liberal and still frequently prefers a more complex, wrong model over a simpler, true model. At first glance these simulations seem to be really good arguments, but the problem with them is that they are meaningless for AIC. As I said before, AIC does not consider that any of the candidate models being tested is actually true. According to AIC, all models are approximations to reality, and reality should never have a low dimensionality. At least lower than some of the candidate models.
+
+My recommendation is to use both AIC and BIC. Most of the times they will agree on the preferred model, when they don't, just report it. There is no one type approach to finding the right model using only AIC, BIC, or Stepwise regression. Each model needs thorough examination and analysis, and based on its characteristics, one would need to use the right tools. However, AIC, BIC , or Stepwise regression techniques can help identify the right steps that need to be taken in eliminating or accepting the models to work with an choose from.

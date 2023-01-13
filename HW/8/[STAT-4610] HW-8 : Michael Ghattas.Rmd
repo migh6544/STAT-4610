@@ -1,0 +1,163 @@
+---
+title: '[STAT 4610] HW-8'
+author: "Michael Ghattas"
+date: "10/24/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Chapter 7
+
+```{r}
+library(MASS)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library(broom)
+library(knitr)
+library(caret)
+library(splines)
+```
+
+
+## Problem-9
+
+```{r}
+set.seed(123)
+theme_set(theme_tufte(base_size = 14) + theme(legend.position = 'top'))
+data('Boston')
+```
+
+
+### Part(a)
+
+```{r}
+lMod <- lm(nox ~ poly(dis, 3), data = Boston)
+summary(lMod)
+plot(lMod)
+
+Boston %>% mutate(pred = predict(lMod, Boston)) %>% ggplot() + geom_point(aes(dis, nox, col = '1')) + geom_line(aes(dis, pred, col = '2'), size = 1.5) + 
+  scale_color_manual(name = 'Value Type', labels = c('Observed', 'Predicted'), values = c('blue', 'red'))
+```
+-> We can note from the summary that each power of the "dis" coefficient seems to be statistically significant.
+-> The fitted line seems to describe the data well.
+
+
+### Part(b)
+
+```{r}
+errs <- list()
+lMods <- list()
+
+pred_df <- data_frame(V1 = 1:506)
+for (i in 1:9) {
+    lMods[[i]] <- lm(nox ~ poly(dis, i), data = Boston)
+    preds <- predict(lMods[[i]])
+    pred_df[[i]] <- preds
+    errs[[i]] <- sqrt(mean((Boston$nox - preds)^2))
+}
+
+Boston %>% cbind(pred_df) %>% gather(Polynomial, prediction, -(1:14)) %>% mutate(Polynomial = factor(Polynomial, levels = unique(as.character(Polynomial)))) %>% ggplot() + 
+  ggtitle('Predicted Values per Level Polynomial Level') + geom_point(aes(dis, nox, col = '1')) +  geom_line(aes(dis, prediction, col = '2'), size = 1.5) + 
+  scale_color_manual(name = 'Value Type', labels = c('Observed', 'Predicted'), values = c('blue', 'red')) + facet_wrap(~ Polynomial, nrow = 3)
+
+errs <- unlist(errs)
+
+names(pred_df) <- paste('Level', 1:9)
+data_frame(RMSE = errs) %>% mutate(Poly = row_number()) %>% ggplot(aes(Poly, RMSE, fill = Poly == which.min(errs))) + geom_col() +  guides(fill = FALSE) + scale_x_continuous(breaks = 1:9) +
+    coord_cartesian(ylim = c(min(errs), max(errs))) + labs(x = 'Polynomial Degree')
+```
+-> The model with the highest polynomial degree has the lowest RSS.
+
+
+### Part(c)
+
+```{r}
+errs <- list()
+folds <- sample(1:10, 506, replace = TRUE)
+errs <- matrix(NA, 10, 9)
+for (k in 1:10) {
+    for (i in 1:9) {
+        model <- lm(nox ~ poly(dis, i), data = Boston[folds != k, ])
+        pred <- predict(model, Boston[folds == k, ])
+        errs[k, i] <- sqrt(mean((Boston$nox[folds == k] - pred)^2))
+    }
+}
+
+errs <- apply(errs, 2, mean)
+
+data_frame(RMSE = errs) %>% mutate(Poly = row_number()) %>% ggplot(aes(Poly, RMSE, fill = Poly == which.min(errs))) + geom_col() + theme_tufte() + guides(fill = FALSE) + scale_x_continuous(breaks = 1:9) +
+    coord_cartesian(ylim = range(errs))
+```
+-> The model with polynomial degree 3 is the highest degree that has the lowest RMSE and thus does not show signs of over-fitting.
+
+
+### Part(d)
+
+```{r}
+lMod <- lm(nox ~ bs(dis, df = 4), data = Boston)
+summary(lMod)
+plot(lMod)
+
+Boston %>% mutate(pred = predict(lMod)) %>% ggplot() + geom_point(aes(dis, nox, col = '1')) + geom_line(aes(dis, pred, col = '2'), size = 1.5) + 
+  scale_color_manual(name = 'Value Type', labels = c('Observed', 'Predicted'), values = c('blue', 'red')) + theme_tufte(base_size = 13)
+```
+-> All the bases seem to be statistically significant for the model.
+-> The prediction line seems to fit the data.
+
+
+### Part(e)
+
+```{r}
+errs <- list()
+lMods <- list()
+
+pred_df <- data_frame(V1 = 1:506)
+for (i in 1:9) {
+    lMods[[i]] <- lm(nox ~ bs(dis, df = i), data = Boston)
+    preds <- predict(lMods[[i]])
+    pred_df[[i]] <- preds
+    errs[[i]] <- sqrt(mean((Boston$nox - preds)^2))
+}
+
+Boston %>% cbind(pred_df) %>% gather(df, prediction, -(1:14)) %>% mutate(df = factor(df, levels = unique(as.character(df)))) %>% ggplot() + ggtitle('Predicted Values per Level Polynomial Level') + 
+  geom_point(aes(dis, nox, col = '1')) + geom_line(aes(dis, prediction, col = '2'), size = 1.5) + 
+  scale_color_manual(name = 'Value Type', labels = c('Observed', 'Predicted'), values = c('blue', 'red')) + facet_wrap(~ df, nrow = 3)
+
+names(pred_df) <- paste(1:9, 'Degrees of Freedom')
+data_frame(RMSE = unlist(errs)) %>% mutate(df = row_number()) %>% ggplot(aes(df, RMSE, fill = df == which.min(errs))) + geom_col() + guides(fill = FALSE) + theme_tufte() + 
+  scale_x_continuous(breaks = 1:9) + coord_cartesian(ylim = range(errs))
+```
+-> It seems that the model with high complexity is the best.
+
+
+### Part(f)
+
+```{r}
+folds <- sample(1:10, size = 506, replace = TRUE)
+errs <- matrix(NA, 10, 9)
+lMods <- list()
+
+for (k in 1:10) {
+    for (i in 1:9) {
+        lMods[[i]] <- lm(nox ~ bs(nox, df = i), data = Boston[folds != k, ])
+        pred <- predict(lMods[[i]], Boston[folds == k, ])
+        errs[k, i] <- sqrt(mean((Boston$nox[folds == k] - pred)^2))
+    }
+}
+
+errs <- apply(errs, 2, mean)
+
+data_frame(RMSE = errs) %>% mutate(df = row_number()) %>% ggplot(aes(df, RMSE, fill = df == which.min(errs))) + geom_col() + theme_tufte() + guides(fill = FALSE) + scale_x_continuous(breaks = 1:9) + 
+  coord_cartesian(ylim = range(errs))
+```
+-> Once validated with out-of-sample data, we are able to choose a simpler model.
+-> As per the polynomial validation process, here we can see that our choice is a complex model with the lowest RMSE, which does not show signs of over-fitting.
+
+
+# End.

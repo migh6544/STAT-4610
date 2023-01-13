@@ -1,0 +1,124 @@
+---
+title: '[STAT 4610] HW - 10'
+author: "Michael Ghattas"
+date: "11/14/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Chapter 9
+## Problem - 8
+```{r}
+library(ISLR)
+library(ISLR2)
+library(e1071)
+```
+### Part (a)
+```{r}
+set.seed(123)
+
+train = sample(nrow(OJ), 800)
+OJ.train = OJ[train, ]
+OJ.test = OJ[-train, ]
+``` 
+### Part (b)
+```{r}
+svmLMod <- svm(Purchase ~ . , kernel = "linear", data = OJ.train, cost = 0.01)
+summary(svmLMod)
+```
+-> SV linear classifier created 442 support vectors from 800 training points. \
+-> 220 belong to level CH. \
+-> 222 belong to level MM.
+
+### Part (c)
+```{r}
+errorRate <- function(svm_model, dataset, true_classes)
+  {
+    confusionMatrix <- table(predict(svm_model, dataset), true_classes)
+    return(1 - sum(diag(confusionMatrix)) / sum(confusionMatrix))
+}
+
+cat("Training Error: ", 100 * errorRate(svmLMod, OJ.train, OJ.train$Purchase), "%\n")
+cat("Test Error: ", 100 * errorRate(svmLMod, OJ.test, OJ.test$Purchase), "%\n")
+```
+-> Training error is 16.5% \
+-> Test error is 17.78%
+
+### Part (d)
+```{r}
+set.seed(123)
+
+svmTune <- tune(svm, Purchase ~ . , data = OJ, kernel = "linear", ranges = list(cost = seq(0.01, 10, length = 100)))
+summary(svmTune)
+```
+-> Tuning indicates optimal cost = 0.3127273
+
+### Part (e)
+```{r}
+svmTLM <- svm(Purchase ~ . , kernel = "linear", data = OJ.train, cost = svmTune$best.parameters$cost)
+
+cat("Training Error: ", 100 * errorRate(svmTLM, OJ.train, OJ.train$Purchase), "%\n")
+cat("Test Error: ", 100 * errorRate(svmTLM, OJ.test, OJ.test$Purchase), "%\n")
+```
+-> Training error is 16.25% \
+-> Test error is 15.93%
+
+### Part (f)
+```{r}
+set.seed(123)
+
+svmRadial <- svm(Purchase ~ . , data = OJ.train, kernel = "radial")
+summary(svmRadial)
+
+cat("Training Error: ", 100 * errorRate(svmRadial, OJ.train, OJ.train$Purchase), "%\n")
+cat("Test Error: ", 100 * errorRate(svmRadial, OJ.test, OJ.test$Purchase), "%\n")
+
+svmTune <- tune(svm, Purchase ~ . , data = OJ.train, kernel = "radial", ranges = list(cost = seq(0.01, 10, length = 100)))
+summary(svmTune)
+
+svmRadial <- svm(Purchase ~ . , data = OJ.train, kernel = "radial", cost = svmTune$best.parameters$cost)
+cat("Training Error: ", 100 * errorRate(svmRadial, OJ.train, OJ.train$Purchase), "%\n")
+cat("Test Error:", 100 * errorRate(svmRadial, OJ.test, OJ.test$Purchase), "%\n")
+```
+-> SV radial classifier created 367 support vectors from 800 training points. \
+-> 181 belong to level CH. \
+-> 186 belong to level MM. \
+-> Training error is 13.63% \
+-> Test error is 18.52% \
+-> Tuning indicates optimal cost = 2.431818
+
+### Part (g)
+```{r}
+set.seed(123)
+
+svmPoly <- svm(Purchase ~ . , data = OJ.train, kernel = "poly", degree = 2)
+summary(svmRadial)
+
+cat("Training Error: ", 100 * errorRate(svmPoly, OJ.train, OJ.train$Purchase), "%\n")
+cat("Test Error: ", 100 * errorRate(svmPoly, OJ.test, OJ.test$Purchase), "%\n")
+
+svmTune <- tune(svm, Purchase ~ . , data = OJ.train, kernel = "poly", degree = 2, ranges = list(cost = seq(0.01, 10, length = 100)))
+summary(svmTune)
+
+svmPoly <- svm(Purchase ~ . , data = OJ.train, kernel = "poly", degree = 2, cost = svmTune$best.parameters$cost)
+cat("Training Error: ", 100 * errorRate(svmPoly, OJ.train, OJ.train$Purchase), "%\n")
+cat("Test Error:", 100 * errorRate(svmPoly, OJ.test, OJ.test$Purchase), "%\n")
+```
+-> SV poly classifier created 342 support vectors from 800 training points. \
+-> 168 belong to level CH. \
+-> 174 belong to level MM. \
+-> Training error is 17.25% \
+-> Test error is 22.22% \
+-> Tuning indicates optimal cost = 3.34
+
+### Part (h)
+-> Best performance on training set belongs to radial kernel. \
+-> Best performance on testing set belongs to linear kernel. \
+-> Overall best performance seems to belong to the linear and radial models.
+
+# End.

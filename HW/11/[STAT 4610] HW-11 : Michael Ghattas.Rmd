@@ -1,0 +1,134 @@
+---
+title: '[STAT 4610] HW-11 / Michael Ghattas'
+author: "Michael Ghattas"
+date: "11/29/2022"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Chapter 10
+
+## Problem-6
+
+### Part (a)
+
+```{r}
+b = seq(from = -6, by = 0.1, length.out = 121)
+rBeta = sin(b) + (b / 10)
+plot(rBeta, type = "l", col = "red", lwd = 1)
+```
+
+### Part (b)
+
+$\cos{(\beta)} + \frac{1}{10}$
+
+### Part (c)
+
+```{r}
+b = seq(from = -6, by = 0.1, length.out = 121)
+rBeta = function(b) {
+  sin(b) + (b / 10)
+}
+graDesc = function(b) {
+  cos(b) + (1 / 10)
+}
+
+plot(b , rBeta(b), type = "l", xlab = "Beta", ylab = "R(Beta)")
+lines (c(4.62, 4.62), c(-2, 2), col = "red", lty = 2)
+
+b = 2.3
+bTrace = b
+rTrace = rBeta(b)
+rho = 0.1
+
+for (step in 1:74) {
+  b = b - (rho * graDesc(b))
+  bTrace = c(bTrace, b)
+  rTrace <- c(rTrace, rBeta(b))
+}
+
+bGrid = data.frame(Beta = bTrace, R = rTrace); bGrid
+minR = min(bGrid$R)
+minB = subset(bGrid, bGrid$R == minR)
+
+lines (bTrace, rTrace, type = "b", col = "blue")
+text (-6, 1, "Answer: Beta = 4.61", col = "black", pos = 4)
+```
+
+### Part (d)
+
+```{r}
+b = seq(from = -6, by = 0.1, length.out = 121)
+rBeta = function(b) {
+  sin(b) + (b / 10)
+}
+graDesc = function(b) {
+  cos(b) + (1 / 10)
+}
+
+plot(b , rBeta(b), type = "l", xlab = "Beta", ylab = "R(Beta)")
+lines (c(-1.67, -1.67), c(-2, 2), col = "red", lty = 2)
+
+b = 1.4
+bTrace = b
+rTrace = rBeta(b)
+rho = 0.1
+
+for (step in 1:74) {
+  b = b - (rho * graDesc(b))
+  bTrace = c(bTrace, b)
+  rTrace <- c(rTrace, rBeta(b))
+}
+
+bGrid = data.frame(Index = seq.int(nrow(bGrid)), Beta = bTrace, R = rTrace); bGrid
+minR = min(bGrid$R)
+minB = subset(bGrid, bGrid$R == minR)
+
+lines (bTrace, rTrace, type = "b", col = "blue")
+text (-6, 1, "Answer: Beta = -1.66", col = "black", pos = 4)
+```
+
+## Problem-7
+
+```{r}
+library(glmnet)
+library(keras)
+
+rawData = read.csv("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/BA-BS/2022/Fall/STAT_4610/Labs/Data/Default.csv")
+data = na.omit(rawData)
+data$default = ifelse(data$default == "Yes", 1 , 0)
+data$student = ifelse(data$student == "Yes", 1 , 0)
+
+n <- nrow(data)
+set.seed(123)
+ntest <- trunc(n / 3)
+testid <- sample(1:n, ntest)
+
+logfit <- glm(default ~ ., data = data[-testid, ], family = "binomial")
+lpred <- predict(logfit, data[testid, ])
+
+x <- scale(model.matrix(default ~ . - 1, data = data))
+y <- data$default
+cvfit <- cv.glmnet(x[-testid, ], y[-testid], type.measure = "mae")
+cpred <- predict(cvfit, x[testid, ], s = "lambda.min")
+
+modnn <- keras_model_sequential() %>% layer_dense(units = 10, activation = "relu", input_shape = ncol(x)) %>% layer_dropout(rate = 0.4) %>% layer_dense(units = 1)
+x <- model.matrix(default ~ . - 1, data = data) %>% scale()
+modnn %>% compile(loss = "mse", optimizer = optimizer_rmsprop(), metrics = list("mean_absolute_error"))
+history <- modnn %>% fit(x[-testid, ], y[-testid], epochs = 4, batch_size = 24, validation_data = list(x[testid, ], y[testid]))
+
+plot(history)
+npred <- predict(modnn, x[testid, ])
+mean(abs(y[testid] - cpred))
+mean(abs(y[testid] - npred))
+```
+
+-> By setting the epochs = 4 and batch_size = 24, we are able to reduce the error to ~0.056 \
+-> Error from the linear logistic regression ~0.063 \
+-> Better performance was achieved by the neural network

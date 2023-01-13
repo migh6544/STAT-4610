@@ -1,0 +1,126 @@
+---
+title: '[STAT 4610] HW - 9'
+author: "Michael Ghattas"
+date: "11/6/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Chapter 8
+
+```{r}
+library(ISLR)
+library(tree)
+library(randomForest)
+```
+
+
+## Problem-3
+
+```{r}
+p <- seq(0, 1, 0.001)
+
+gini.index <- 2 * (p * (1 - p))
+class.error <- 1 - pmax(p, 1 - p)
+cross.entropy <- - ((p * log(p)) + ((1 - p) * log(1 - p)))
+
+matplot(p, cbind(gini.index, class.error, cross.entropy), col = c("black", "red", "blue"))
+```
+
+
+## Problem-8
+
+```{r}
+data(Carseats)
+```
+
+
+### part (a)
+
+```{r}
+set.seed(1)
+
+train = sample(1:nrow(Carseats), nrow(Carseats) / 2)
+Car.train = Carseats[train, ]
+Car.test = Carseats[-train, ]
+```
+
+
+### Part (b)
+
+```{r}
+reg.tree = tree(Sales~.,data = Carseats, subset=train)
+reg.tree = tree(Sales~.,data = Car.train)
+summary(reg.tree)
+
+plot(reg.tree)
+text(reg.tree, pretty = 0)
+
+yhat = predict(reg.tree,newdata = Car.test)
+mean((yhat - Car.test$Sales)^2)
+```
+
+-> Test MSE = 4.922
+
+
+### Part (c)
+
+```{r}
+set.seed(1)
+
+cv.car = cv.tree(reg.tree)
+plot(cv.car$size, cv.car$dev, type = "b")
+
+prune.car = prune.tree(reg.tree, best = 8)
+plot(prune.car)
+text(prune.car, pretty = 0)
+
+yhat = predict(prune.car, newdata = Car.test)
+mean((yhat - Car.test$Sales)^2)
+```
+
+-> Optimal tree complexity level = 8 \
+-> Pruning tree increases MSE to 5.113 \
+-> Worse performance
+
+
+### Part (d)
+
+```{r}
+set.seed(1)
+
+bag.car = randomForest(Sales ~ ., data = Car.train, mtry = 10, importance = TRUE)
+yhat.bag = predict(bag.car, newdata = Car.test)
+mean((yhat.bag - Car.test$Sales)^2)
+
+importance(bag.car)
+varImpPlot(bag.car)
+```
+
+-> MSE = 2.605 \
+-> Better performance \
+-> Most important variables are: (1) Price | (2) Shelving Location
+
+
+### part (e)
+
+```{r}
+set.seed(1)
+
+rf.car = randomForest(Sales ~ ., data = Car.train, mtry = 3, importance = TRUE)
+yhat.rf = predict(rf.car, newdata = Car.test)
+mean((yhat.rf - Car.test$Sales)^2)
+```
+
+-> $m = \sqrt(p)$ \
+-> MSE = 2.961 \
+-> Worse performance
+
+
+# End.
