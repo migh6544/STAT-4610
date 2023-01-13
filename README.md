@@ -1,0 +1,6 @@
+# STAT 4610-001 | Statistical Learning
+
+Consists of applications and methods of statistical learning. Reviews multiple linear regression and then covers classification, regularization, splines, tree-based methods, support vector machines, unsupervised learning and Gaussian process regression. Same as STAT 5610.
+
+Description:
+This course introduces students to basic analytical tools in statistics and operations management, and provides theoretical concepts and skills that are building blocks for future courses. The approach is to present students with a "corporate" view of how statistical tools are used to analyze data and facilitate business decision-making. Students will familiarize themselves with all of the statistical techniques and models presented in the course and will demonstrate knowledge in applying the appropriate techniques and models to various data sets and interpreting the results of the analysis. The Microsoft Excel Data Analysis and Solver Toolkits will be used to conduct statistical analyses, allowing students to become more proficient overall in using Microsoft Excel and to place their emphasis on applications to core business disciplines, statistical reasoning, and proper interpretation of results. A rich variety of such problems and settings will be discussed in class.
